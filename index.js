@@ -18,7 +18,17 @@ const argv = yargs
     describe: 'path to output file',
     type: 'string',
   })
-  .demandOption(['input', 'size', 'output'], 'Please provide the required arguments.')
+  .option('stdin', {
+    describe: 'read input from stdin',
+    type: 'boolean',
+  })
+  .option('stdout', {
+    describe: 'write output to stdout',
+    type: 'boolean',
+  })
+  .demandOption(['size'], 'Please provide the required arguments.')
+  .conflicts('stdin', 'input')
+  .conflicts('stdout', 'output')
   .help()
   .argv;
 
@@ -26,15 +36,22 @@ const argv = yargs
   const browser = await puppeteer.launch({headless: true, args: ['--disable-gpu', '--no-sandbox']});
   const page = await browser.newPage();
 
-  const svgFile = argv.input;
+  var svgFile;
+  if (argv.stdin) {
+    svgFile = 0;
+  } else {
+    svgFile = argv.input
+  }
   const pngSize = argv.size;
   var svgData = '';
   try {
     const bytes = fs.readFileSync(svgFile, 'utf8');
     svgData = bytes.toString();
-  } catch(e) {
-      console.log(e);
+  } catch (e) {
+    console.log(e);
+    process.exit(1);
   }
+
   const html = `<html>
             <head>
                 <style>
@@ -80,7 +97,16 @@ const argv = yargs
   const prefix = 'data:image/png;base64,';
   const b64Data = data.replace(prefix, '');
 
-  fs.writeFile(argv.output, b64Data, 'base64', (err) => console.log(err));
+  if (argv.stdout) {
+    process.stdout.write(b64Data);
+  } else {
+    fs.writeFile(argv.output, b64Data, 'base64', (err) => {
+      if (err) {
+        console.log(err);
+        process.exit(1);
+      }
+    });
+  }
 
   await browser.close();
 })(argv);

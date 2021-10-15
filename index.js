@@ -69,15 +69,16 @@ const argv = yargs
     var svg = document.getElementById('carbon-label-svg');
 
     // Label is a square, so only need one side.
-    var currentSVGSize = parseFloat(svg.getAttribute('width'));
-    var scaleFactor = size*1.0 / currentSVGSize;
+    var currentSVGWidth = parseFloat(svg.getAttribute('width'));
+    var currentSVGHeight = parseFloat(svg.getAttribute('height'));
+    var scaleFactor = size*1.0 / currentSVGWidth;
 
     // Get the XML data only once transform has been applied.
     var svgData = new XMLSerializer().serializeToString(svg);
 
     var canvas = document.createElement("canvas");
     canvas.width = size;
-    canvas.height = size;
+    canvas.height = currentSVGHeight / currentSVGWidth * size;
     var ctx = canvas.getContext("2d");
 
     //display image
